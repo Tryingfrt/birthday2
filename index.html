@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Warm Birthday Wish — For Athala</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Nunito:wght@200;300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* ============================================
+           ROOT VARIABLES & RESET
+           ============================================ */
+        :root {
+            --purple-deep: #1a1625;
+            --purple-mid: #2d2640;
+            --purple-soft: #6b5b95;
+            --blue-soft: #7eb5d6;
+            --peach: #f8b595;
+            --coral: #f67280;
+            --gold: #ffd993;
+            --cream: #fff8e7;
+            --white-soft: rgba(255, 248, 231, 0.9);
+            --white-muted: rgba(255, 248, 231, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(ellipse at center, #1a1428 0%, #0a0a12 50%, #050508 100%);
+            color: var(--cream);
+            overflow: hidden;
+            min-height: 100vh;
+            cursor: default;
+        }
+
+        /* ============================================
+           3D CANVAS
+           ============================================ */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #three-canvas {
+            display: block;
+        }
+
+        /* ============================================
+           UI OVERLAY
+           ============================================ */
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* ============================================
+           MUTE BUTTON
+           ============================================ */
+        #mute-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: var(--cream);
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mute-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* ============================================
+           SCREENS
+           ============================================ */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1.5s ease, visibility 1.5s ease;
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* ============================================
+           SCREEN 1: ARRIVAL
+           ============================================ */
+        #screen-arrival {
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(13,10,20,0.4) 100%);
+        }
+
+        .arrival-content {
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .connecting-text {
+            font-size: 1rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            margin-bottom: 3rem;
+            opacity: 0;
+        }
+
+        .connecting-text .dots {
+            display: inline-block;
+            width: 30px;
+            text-align: left;
+        }
+
+        .distance-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            opacity: 0;
+        }
+
+        .location-point {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .location-orb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--gold), var(--peach));
+            box-shadow: 0 0 20px var(--gold), 0 0 40px rgba(255, 217, 147, 0.3);
+            animation: orb-pulse 2s ease-in-out infinite;
+        }
+
+        .location-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            color: var(--white-muted);
+            text-transform: uppercase;
+        }
+
+        .connection-beam {
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold), var(--coral), var(--purple-soft), var(--blue-soft), var(--gold));
+            background-size: 200% 100%;
+            animation: beam-flow 3s linear infinite;
+            position: relative;
+        }
+
+        .connection-beam::before {
+            content: '✦';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--cream);
+            font-size: 0.6rem;
+            animation: star-pulse 1.5s ease-in-out infinite;
+        }
+
+        .arrival-message {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--white-soft);
+            line-height: 1.8;
+            margin-bottom: 3rem;
+            opacity: 0;
+        }
+
+        .begin-btn {
+            padding: 1rem 2.5rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--purple-deep);
+            background: linear-gradient(135deg, var(--gold) 0%, var(--peach) 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 40px rgba(248, 181, 149, 0.3);
+            pointer-events: auto;
+        }
+
+        .begin-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 20px 60px rgba(248, 181, 149, 0.4);
+        }
+
+        /* ============================================
+           SCREEN 2: REVELATION (Typing Messages)
+           ============================================ */
+        #screen-revelation {
+            background: radial-gradient(ellipse at center, rgba(107, 91, 149, 0.1) 0%, transparent 60%);
+        }
+
+        .revelation-content {
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .message-container {
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .typed-message {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 300;
+            line-height: 1.9;
+            color: var(--cream);
+        }
+
+        .typed-message .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.5em;
+            background: var(--gold);
+            margin-left: 3px;
+            animation: cursor-blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+
+        .message-indicator {
+            display: flex;
+            gap: 8px;
+            margin: 2.5rem 0;
+            opacity: 0;
+        }
+
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+        }
+
+        .indicator-dot.active {
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+        }
+
+        .indicator-dot.completed {
+            background: var(--peach);
+        }
+
+        .continue-btn {
+            padding: 0.9rem 2rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            color: var(--cream);
+            background: transparent;
+            border: 1px solid rgba(255, 248, 231, 0.3);
+            border-radius: 50px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+            pointer-events: auto;
+        }
+
+        .continue-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .continue-btn:hover {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--purple-deep);
+        }
+
+        /* ============================================
+           SCREEN 3: BIRTHDAY CELEBRATION
+           ============================================ */
+        #screen-birthday {
+            background: radial-gradient(ellipse at center, rgba(255, 217, 147, 0.08) 0%, transparent 50%);
+        }
+
+        .birthday-content {
+            max-width: 700px;
+            text-align: center;
+        }
+
+        .birthday-pretitle {
+            font-size: 0.8rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--peach);
+            margin-bottom: 0.8rem;
+            opacity: 0;
+        }
+
+        .birthday-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.5rem;
+            font-weight: 300;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--gold) 40%, var(--peach) 70%, var(--coral) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.3rem;
+            opacity: 0;
+            letter-spacing: 0.02em;
+        }
+
+        .birthday-date {
+            font-size: 0.9rem;
+            color: var(--white-muted);
+            letter-spacing: 0.2em;
+            margin-bottom: 2rem;
+            opacity: 0;
+        }
+
+        .gift-orb-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 2rem;
+            opacity: 0;
+        }
+
+        .gift-orb {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            animation: float-gentle 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(255, 217, 147, 0.5));
+        }
+
+        .gift-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px solid;
+            animation: rotate-ring 15s linear infinite;
+        }
+
+        .gift-ring-1 {
+            width: 160px;
+            height: 160px;
+            border-color: rgba(255, 217, 147, 0.3);
+        }
+
+        .gift-ring-2 {
+            width: 180px;
+            height: 180px;
+            border-color: rgba(248, 181, 149, 0.2);
+            animation-direction: reverse;
+            animation-duration: 20s;
+        }
+
+        .gift-ring-3 {
+            width: 200px;
+            height: 200px;
+            border-color: rgba(107, 91, 149, 0.15);
+            animation-duration: 25s;
+        }
+
+        .ring-star {
+            position: absolute;
+            font-size: 0.5rem;
+            color: var(--gold);
+        }
+
+        .birthday-message {
+            font-size: 1.1rem;
+            font-weight: 300;
+            line-height: 2;
+            color: var(--white-soft);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            opacity: 0;
+        }
+
+        .birthday-wishes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.7rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+        }
+
+        .wish-tag {
+            padding: 0.5rem 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 300;
+            color: var(--white-muted);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .wish-tag:hover {
+            background: rgba(255, 217, 147, 0.15);
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .birthday-continue {
+            padding: 1rem 2.2rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            color: var(--cream);
+            background: linear-gradient(135deg, rgba(248, 181, 149, 0.2) 0%, rgba(246, 114, 128, 0.2) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: auto;
+        }
+
+        .birthday-continue:hover {
+            background: linear-gradient(135deg, var(--peach) 0%, var(--coral) 100%);
+            color: var(--purple-deep);
+            border-color: transparent;
+        }
+
+        /* ============================================
+           SCREEN 4: FINAL CELEBRATION
+           ============================================ */
+        #screen-finale {
+            background: radial-gradient(ellipse at center, rgba(255, 217, 147, 0.1) 0%, transparent 50%);
+        }
+
+        .finale-content {
+            max-width: 580px;
+            text-align: center;
+        }
+
+        .finale-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: float-gentle 3s ease-in-out infinite;
+        }
+
+        .finale-quote {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 300;
+            font-style: italic;
+            line-height: 1.8;
+            color: var(--cream);
+            margin-bottom: 2rem;
+            opacity: 0;
+        }
+
+        .finale-divider {
+            width: 50px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 1.5rem auto;
+            opacity: 0;
+        }
+
+        .finale-message {
+            font-size: 1rem;
+            font-weight: 300;
+            line-height: 2;
+            color: var(--white-soft);
+            margin-bottom: 2rem;
+            opacity: 0;
+        }
+
+        .finale-closing {
+            margin-top: 2rem;
+            opacity: 0;
+        }
+
+        .finale-signature {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-style: italic;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .finale-from {
+            font-size: 0.85rem;
+            color: var(--white-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .finale-actions {
+            margin-top: 2.5rem;
+            opacity: 0;
+        }
+
+        .restart-btn {
+            padding: 0.7rem 1.8rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            color: var(--white-muted);
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .restart-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes orb-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px var(--gold), 0 0 40px rgba(255, 217, 147, 0.3);
+            }
+            50% { 
+                transform: scale(1.2);
+                box-shadow: 0 0 30px var(--gold), 0 0 60px rgba(255, 217, 147, 0.5);
+            }
+        }
+
+        @keyframes beam-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes star-pulse {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+        }
+
+        @keyframes cursor-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes float-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        @keyframes rotate-ring {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .arrival-message {
+                font-size: 1.2rem;
+            }
+
+            .typed-message {
+                font-size: 1.4rem;
+            }
+
+            .birthday-name {
+                font-size: 2.5rem;
+            }
+
+            .finale-quote {
+                font-size: 1.3rem;
+            }
+
+            .connection-beam {
+                width: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .screen {
+                padding: 1.5rem;
+            }
+
+            .birthday-name {
+                font-size: 2rem;
+            }
+
+            .typed-message {
+                font-size: 1.2rem;
+            }
+
+            .gift-orb-container {
+                width: 120px;
+                height: 120px;
+            }
+
+            .gift-orb {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==========================================
+         3D CANVAS
+         ========================================== -->
+    <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+    </div>
+
+    <!-- ==========================================
+         MUTE BUTTON
+         ========================================== -->
+    <button id="mute-btn" title="Toggle Sound">🔇</button>
+
+    <!-- ==========================================
+         UI OVERLAY
+         ========================================== -->
+    <div id="ui-layer">
+        
+        <!-- SCREEN 1: ARRIVAL -->
+        <div id="screen-arrival" class="screen active">
+            <div class="arrival-content">
+                <p class="connecting-text">
+                    Connecting across distance<span class="dots"></span>
+                </p>
+                
+                <div class="distance-visual">
+                    <div class="location-point">
+                        <div class="location-orb"></div>
+                        <span class="location-label">Pakistan</span>
+                    </div>
+                    <div class="connection-beam"></div>
+                    <div class="location-point">
+                        <div class="location-orb"></div>
+                        <span class="location-label">Indonesia</span>
+                    </div>
+                </div>
+                
+                <p class="arrival-message">
+                    "Some moments are written in the stars,<br>
+                    and they shine across any distance..."
+                </p>
+                
+                <button class="begin-btn" id="begin-btn">Enter This Moment</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: REVELATION -->
+        <div id="screen-revelation" class="screen">
+            <div class="revelation-content">
+                <div class="message-container">
+                    <p class="typed-message" id="typed-message"></p>
+                </div>
+                <div class="message-indicator" id="message-indicator"></div>
+                <button class="continue-btn" id="continue-btn">Continue</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: BIRTHDAY -->
+        <div id="screen-birthday" class="screen">
+            <div class="birthday-content">
+                <p class="birthday-pretitle">Happy Birthday</p>
+                <h1 class="birthday-name">Athala</h1>
+                <p class="birthday-date" id="birthday-date">Today</p>
+                
+                <div class="gift-orb-container">
+                    <div class="gift-ring gift-ring-1">
+                        <span class="ring-star" style="top: 0; left: 50%;">✦</span>
+                    </div>
+                    <div class="gift-ring gift-ring-2">
+                        <span class="ring-star" style="top: 50%; right: 0;">✦</span>
+                    </div>
+                    <div class="gift-ring gift-ring-3">
+                        <span class="ring-star" style="bottom: 0; left: 50%;">✦</span>
+                    </div>
+                    <div class="gift-orb">🎂</div>
+                </div>
+                
+                <p class="birthday-message">
+                    Athala, wishing you a truly happy birthday.
+                    May your day feel light, calm, and full of good moments.
+                    Sending you warm wishes for a beautiful year ahead.
+                </p>
+                
+                <div class="birthday-wishes">
+                    <span class="wish-tag">✦ Endless Joy</span>
+                    <span class="wish-tag">✦ Peaceful Heart</span>
+                    <span class="wish-tag">✦ Dreams Fulfilled</span>
+                    <span class="wish-tag">✦ Beautiful Adventures</span>
+                    <span class="wish-tag">✦ Lasting Happiness</span>
+                </div>
+                
+                <button class="birthday-continue" id="birthday-continue">One Last Thing →</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: FINALE -->
+        <div id="screen-finale" class="screen">
+            <div class="finale-content">
+                <div class="finale-icon">🌟</div>
+                
+                <p class="finale-quote">
+                    "Distance is just a detail<br>
+                    when a birthday wish is sincere."
+                </p>
+                
+                <div class="finale-divider"></div>
+                
+                <p class="finale-message">
+                    Athala, I hope today feels special in the best way.
+                    Even from afar, I'm sending you warm wishes and good energy for the year ahead.
+                    May your days be peaceful, your goals feel closer, and your smile come easily.
+                </p>
+                
+                <div class="finale-closing">
+                    <p class="finale-signature">Happy Birthday, Athala</p>
+                    <p class="finale-from">— With warm wishes, from across the miles</p>
+                </div>
+                
+                <div class="finale-actions">
+                    <button class="restart-btn" id="restart-btn">Experience Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================
+           CONFETTI CONFIGURATION
+           ============================================ */
+        
+        const confettiPalettes = {
+            warm: ['#ffd993', '#f8b595', '#f67280', '#c06c84', '#6b5b95'],
+            celebration: ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff8fd8'],
+            elegant: ['#ffd993', '#fff8e7', '#f8b595', '#e8d5b7', '#c9b896'],
+            daisy: ['#ffffff', '#fff9c4', '#ffeb3b', '#ffc107', '#ff9800'],
+            cosmic: ['#6b5b95', '#7eb5d6', '#b8a9c9', '#f8b595', '#ffd993'],
+            rainbow: ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93'],
+            gold: ['#ffd700', '#ffb347', '#ffd993', '#fff8e7', '#fffacd'],
+            rose: ['#f67280', '#c06c84', '#f8b595', '#dda0dd', '#e6e6fa'],
+            magical: ['#ffd993', '#f8b595', '#7eb5d6', '#b8a9c9', '#ffffff']
+        };
+
+        /* ============================================
+           CONFETTI EFFECTS
+           ============================================ */
+        
+        function gentleSparkles(duration = 3000) {
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({
+                    particleCount: 2,
+                    angle: 90,
+                    spread: 360,
+                    startVelocity: 12,
+                    decay: 0.94,
+                    gravity: 0.4,
+                    origin: { x: Math.random(), y: Math.random() * 0.5 },
+                    colors: confettiPalettes.gold,
+                    shapes: ['circle'],
+                    scalar: 0.5,
+                    ticks: 100
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        function messageConfetti() {
+            confetti({
+                particleCount: 20,
+                angle: 90,
+                spread: 60,
+                startVelocity: 30,
+                origin: { x: 0.5, y: 0.7 },
+                colors: confettiPalettes.cosmic,
+                scalar: 0.9,
+                ticks: 120
+            });
+        }
+
+        function milestoneConfetti() {
+            confetti({
+                particleCount: 40,
+                angle: 60,
+                spread: 55,
+                startVelocity: 45,
+                origin: { x: 0, y: 0.6 },
+                colors: confettiPalettes.warm,
+                ticks: 150
+            });
+            confetti({
+                particleCount: 40,
+                angle: 120,
+                spread: 55,
+                startVelocity: 45,
+                origin: { x: 1, y: 0.6 },
+                colors: confettiPalettes.warm,
+                ticks: 150
+            });
+        }
+
+        function birthdayRevealConfetti() {
+            // Center burst
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                startVelocity: 55,
+                origin: { x: 0.5, y: 0.5 },
+                colors: confettiPalettes.daisy,
+                ticks: 250
+            });
+
+            // Side cannons
+            setTimeout(() => {
+                confetti({
+                    particleCount: 80,
+                    angle: 60,
+                    spread: 60,
+                    startVelocity: 60,
+                    origin: { x: 0, y: 0.65 },
+                    colors: confettiPalettes.celebration
+                });
+                confetti({
+                    particleCount: 80,
+                    angle: 120,
+                    spread: 60,
+                    startVelocity: 60,
+                    origin: { x: 1, y: 0.65 },
+                    colors: confettiPalettes.celebration
+                });
+            }, 250);
+
+            // Top cascade
+            setTimeout(() => {
+                confetti({
+                    particleCount: 70,
+                    angle: 270,
+                    spread: 140,
+                    startVelocity: 25,
+                    origin: { x: 0.3, y: 0 },
+                    colors: confettiPalettes.gold,
+                    gravity: 1.1
+                });
+                confetti({
+                    particleCount: 70,
+                    angle: 270,
+                    spread: 140,
+                    startVelocity: 25,
+                    origin: { x: 0.7, y: 0 },
+                    colors: confettiPalettes.rose,
+                    gravity: 1.1
+                });
+            }, 500);
+
+            // Continuous rain
+            const rainEnd = Date.now() + 4000;
+            (function rainFrame() {
+                confetti({
+                    particleCount: 4,
+                    angle: 270,
+                    spread: 180,
+                    startVelocity: 8,
+                    origin: { x: Math.random(), y: -0.1 },
+                    colors: confettiPalettes.daisy,
+                    gravity: 0.7,
+                    scalar: 1.3,
+                    drift: Math.random() - 0.5,
+                    ticks: 350
+                });
+                if (Date.now() < rainEnd) requestAnimationFrame(rainFrame);
+            }());
+        }
+
+        function birthdaySparkles() {
+            const end = Date.now() + 6000;
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 90,
+                    spread: 360,
+                    startVelocity: 18,
+                    decay: 0.93,
+                    origin: { x: Math.random(), y: Math.random() * 0.5 },
+                    colors: confettiPalettes.magical,
+                    shapes: ['circle', 'square'],
+                    scalar: 0.7,
+                    ticks: 160
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        function finaleGrandCelebration() {
+            // Phase 1: Epic center explosion
+            confetti({
+                particleCount: 180,
+                spread: 120,
+                startVelocity: 65,
+                origin: { x: 0.5, y: 0.55 },
+                colors: confettiPalettes.rainbow,
+                ticks: 350
+            });
+
+            // Phase 2: Multi-wave side cannons
+            setTimeout(() => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 100,
+                            angle: 60,
+                            spread: 55,
+                            startVelocity: 75,
+                            origin: { x: 0, y: 0.75 },
+                            colors: confettiPalettes.celebration,
+                            ticks: 280
+                        });
+                        confetti({
+                            particleCount: 100,
+                            angle: 120,
+                            spread: 55,
+                            startVelocity: 75,
+                            origin: { x: 1, y: 0.75 },
+                            colors: confettiPalettes.celebration,
+                            ticks: 280
+                        });
+                    }, i * 350);
+                }
+            }, 400);
+
+            // Phase 3: Firework bursts
+            setTimeout(() => {
+                const positions = [
+                    { x: 0.2, y: 0.25 }, { x: 0.8, y: 0.25 },
+                    { x: 0.5, y: 0.15 }, { x: 0.35, y: 0.4 }, { x: 0.65, y: 0.4 }
+                ];
+                positions.forEach((pos, i) => {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 60,
+                            spread: 360,
+                            startVelocity: 35,
+                            origin: pos,
+                            colors: confettiPalettes.cosmic,
+                            ticks: 220,
+                            scalar: 1.3
+                        });
+                    }, i * 180);
+                });
+            }, 1400);
+
+            // Phase 4: Golden shower
+            setTimeout(() => {
+                const showerEnd = Date.now() + 4000;
+                (function showerFrame() {
+                    confetti({
+                        particleCount: 6,
+                        angle: 270,
+                        spread: 180,
+                        startVelocity: 12,
+                        origin: { x: Math.random(), y: -0.1 },
+                        colors: confettiPalettes.gold,
+                        gravity: 0.5,
+                        scalar: 1.6,
+                        drift: (Math.random() - 0.5) * 2.5,
+                        ticks: 450
+                    });
+                    if (Date.now() < showerEnd) requestAnimationFrame(showerFrame);
+                }());
+            }, 2200);
+
+            // Phase 5: Continuous streams
+            setTimeout(() => {
+                const streamEnd = Date.now() + 10000;
+                (function streamFrame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 45,
+                        startVelocity: 55,
+                        origin: { x: 0, y: Math.random() },
+                        colors: confettiPalettes.warm,
+                        ticks: 220
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 45,
+                        startVelocity: 55,
+                        origin: { x: 1, y: Math.random() },
+                        colors: confettiPalettes.rose,
+                        ticks: 220
+                    });
+                    if (Date.now() < streamEnd) requestAnimationFrame(streamFrame);
+                }());
+            }, 800);
+
+            // Phase 6: Daisy bursts
+            setTimeout(() => {
+                for (let i = 0; i < 6; i++) {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 50,
+                            spread: 90,
+                            startVelocity: 50,
+                            origin: { x: 0.15 + (i * 0.14), y: 0.35 },
+                            colors: confettiPalettes.daisy,
+                            scalar: 1.4,
+                            ticks: 280
+                        });
+                    }, i * 130);
+                }
+            }, 1800);
+
+            // Phase 7: Heart bursts
+            setTimeout(() => {
+                const heartPos = [{ x: 0.25, y: 0.35 }, { x: 0.5, y: 0.25 }, { x: 0.75, y: 0.35 }];
+                heartPos.forEach((pos, i) => {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 70,
+                            spread: 110,
+                            startVelocity: 40,
+                            origin: pos,
+                            colors: confettiPalettes.rose,
+                            scalar: 1.5,
+                            ticks: 240
+                        });
+                    }, i * 280);
+                });
+            }, 3200);
+
+            // Phase 8: Star explosion
+            setTimeout(() => {
+                confetti({
+                    particleCount: 150,
+                    spread: 360,
+                    startVelocity: 55,
+                    origin: { x: 0.5, y: 0.45 },
+                    colors: confettiPalettes.gold,
+                    scalar: 1.6,
+                    ticks: 350
+                });
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 80,
+                        spread: 360,
+                        startVelocity: 45,
+                        origin: { x: 0.3, y: 0.35 },
+                        colors: confettiPalettes.daisy,
+                        ticks: 280
+                    });
+                    confetti({
+                        particleCount: 80,
+                        spread: 360,
+                        startVelocity: 45,
+                        origin: { x: 0.7, y: 0.35 },
+                        colors: confettiPalettes.daisy,
+                        ticks: 280
+                    });
+                }, 200);
+            }, 4200);
+
+            // Phase 9: MEGA finale
+            setTimeout(() => {
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 250,
+                            spread: 180,
+                            startVelocity: 80,
+                            origin: { x: 0.5, y: 0.5 },
+                            colors: confettiPalettes.rainbow,
+                            scalar: 1.3,
+                            gravity: 0.9,
+                            ticks: 400
+                        });
+                    }, i * 180);
+                }
+
+                // Corner explosions
+                setTimeout(() => {
+                    const corners = [
+                        { x: 0, y: 0, angle: 45 }, { x: 1, y: 0, angle: 135 },
+                        { x: 0, y: 1, angle: 315 }, { x: 1, y: 1, angle: 225 }
+                    ];
+                    corners.forEach((c, i) => {
+                        setTimeout(() => {
+                            confetti({
+                                particleCount: 100,
+                                angle: c.angle,
+                                spread: 70,
+                                startVelocity: 70,
+                                origin: { x: c.x, y: c.y },
+                                colors: confettiPalettes.celebration,
+                                ticks: 300
+                            });
+                        }, i * 100);
+                    });
+                }, 500);
+            }, 5500);
+
+            // Phase 10: Infinite celebration
+            continuousCelebration(18000);
+        }
+
+        function continuousCelebration(duration) {
+            const end = Date.now() + duration;
+            (function frame() {
+                // Random side bursts
+                if (Math.random() > 0.65) {
+                    confetti({
+                        particleCount: 10,
+                        angle: Math.random() > 0.5 ? 60 : 120,
+                        spread: 45,
+                        startVelocity: 60,
+                        origin: { x: Math.random() > 0.5 ? 0 : 1, y: Math.random() },
+                        colors: Math.random() > 0.5 ? confettiPalettes.warm : confettiPalettes.cosmic,
+                        ticks: 200
+                    });
+                }
+
+                // Gentle top rain
+                confetti({
+                    particleCount: 3,
+                    angle: 270,
+                    spread: 180,
+                    startVelocity: 6,
+                    origin: { x: Math.random(), y: -0.1 },
+                    colors: confettiPalettes.gold,
+                    gravity: 0.35,
+                    scalar: 1.4,
+                    drift: (Math.random() - 0.5) * 3,
+                    ticks: 450
+                });
+
+                // Random sparkles
+                if (Math.random() > 0.75) {
+                    confetti({
+                        particleCount: 4,
+                        spread: 360,
+                        startVelocity: 15,
+                        origin: { x: Math.random(), y: Math.random() * 0.6 },
+                        colors: confettiPalettes.daisy,
+                        scalar: 0.8,
+                        ticks: 140
+                    });
+                }
+
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        let finaleInterval;
+        function startFinalePeriodicBursts() {
+            finaleInterval = setInterval(() => {
+                if (currentScreen === 3) {
+                    confetti({
+                        particleCount: 40,
+                        angle: Math.random() * 360,
+                        spread: 70,
+                        startVelocity: 45,
+                        origin: { x: Math.random(), y: Math.random() * 0.4 },
+                        colors: confettiPalettes.celebration,
+                        ticks: 180
+                    });
+                }
+            }, 1800);
+        }
+
+        /* ============================================
+           THREE.JS 3D SCENE
+           ============================================ */
+        
+        let scene, camera, renderer;
+        let stars, floatingParticles;
+        let mouseX = 0, mouseY = 0;
+        let currentScreen = 0;
+        let audioContext, gainNode, isPlaying = false;
+
+        let globe, connectionArc, locationMarkers, arcParticles;
+
+        const sceneConfigs = {
+            0: { cameraZ: 5, globeOpacity: 1, globeScale: 1 },
+            1: { cameraZ: 7, globeOpacity: 0.6, globeScale: 1.1 },
+            2: { cameraZ: 9, globeOpacity: 0.3, globeScale: 1.2 },
+            3: { cameraZ: 12, globeOpacity: 0, globeScale: 0 }
+        };
+
+        function initThreeJS() {
+            const canvas = document.getElementById('three-canvas');
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x0a0a12, 1);
+
+            createStarField();
+            createGlobe();
+            createConnectionArc();
+            createFloatingParticles();
+            createAmbientLights();
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('touchmove', onTouchMove, { passive: true });
+            window.addEventListener('resize', onWindowResize);
+
+            animate();
+        }
+
+        function createStarField() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+
+            for (let i = 0; i < 3000; i++) {
+                const x = (Math.random() - 0.5) * 150;
+                const y = (Math.random() - 0.5) * 150;
+                const z = (Math.random() - 0.5) * 150;
+                vertices.push(x, y, z);
+
+                const color = new THREE.Color();
+                const rand = Math.random();
+                if (rand > 0.8) {
+                    color.setHSL(0.1, 0.8, 0.8); // Gold stars
+                } else if (rand > 0.6) {
+                    color.setHSL(0.6, 0.5, 0.7); // Blue stars
+                } else {
+                    color.setHSL(0.08, 0.2, 0.9); // White-ish stars
+                }
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.08,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.9,
+                sizeAttenuation: true
+            });
+
+            stars = new THREE.Points(geometry, material);
+            scene.add(stars);
+        }
+
+        function createGlobe() {
+            globe = new THREE.Group();
+
+            // Wireframe sphere - main globe
+            const sphereGeometry = new THREE.SphereGeometry(1.8, 32, 32);
+            const wireframeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x6b5b95,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const wireframeSphere = new THREE.Mesh(sphereGeometry, wireframeMaterial);
+            globe.add(wireframeSphere);
+
+            // Inner glowing core
+            const coreGeometry = new THREE.SphereGeometry(0.3, 24, 24);
+            const coreMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffd993,
+                transparent: true,
+                opacity: 0.8
+            });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            globe.add(core);
+
+            // Core glow layer
+            const coreGlowGeometry = new THREE.SphereGeometry(0.5, 24, 24);
+            const coreGlowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xf8b595,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide
+            });
+            const coreGlow = new THREE.Mesh(coreGlowGeometry, coreGlowMaterial);
+            globe.add(coreGlow);
+
+            // Latitude rings
+            const latitudes = [-0.6, -0.3, 0, 0.3, 0.6];
+            latitudes.forEach((lat, i) => {
+                const radius = Math.sqrt(1 - lat * lat) * 1.82;
+                const ringGeometry = new THREE.TorusGeometry(radius, 0.008, 8, 64);
+                const ringMaterial = new THREE.MeshBasicMaterial({
+                    color: i === 2 ? 0xffd993 : 0x7eb5d6,
+                    transparent: true,
+                    opacity: i === 2 ? 0.5 : 0.2
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.position.y = lat * 1.8;
+                ring.rotation.x = Math.PI / 2;
+                globe.add(ring);
+            });
+
+            // Outer atmospheric glow
+            const atmosphereGeometry = new THREE.SphereGeometry(2.1, 32, 32);
+            const atmosphereMaterial = new THREE.MeshBasicMaterial({
+                color: 0x7eb5d6,
+                transparent: true,
+                opacity: 0.08,
+                side: THREE.BackSide
+            });
+            const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            globe.add(atmosphere);
+
+            scene.add(globe);
+        }
+
+        function createConnectionArc() {
+            // Location markers group
+            locationMarkers = new THREE.Group();
+
+            // Philippines marker position (approximate on globe)
+            const phiLat = 0.22;
+            const phiLon = 2.1;
+            const phiPos = new THREE.Vector3(
+                Math.cos(phiLat) * Math.sin(phiLon) * 1.85,
+                Math.sin(phiLat) * 1.85,
+                Math.cos(phiLat) * Math.cos(phiLon) * 1.85
+            );
+
+            // Friend's location marker (opposite side)
+            const friendLat = 0.7;
+            const friendLon = -1.2;
+            const friendPos = new THREE.Vector3(
+                Math.cos(friendLat) * Math.sin(friendLon) * 1.85,
+                Math.sin(friendLat) * 1.85,
+                Math.cos(friendLat) * Math.cos(friendLon) * 1.85
+            );
+
+            // Create glowing markers
+            const createMarker = (position, color) => {
+                const group = new THREE.Group();
+                
+                // Core
+                const coreGeo = new THREE.SphereGeometry(0.08, 16, 16);
+                const coreMat = new THREE.MeshBasicMaterial({ color: color });
+                const core = new THREE.Mesh(coreGeo, coreMat);
+                group.add(core);
+
+                // Glow
+                const glowGeo = new THREE.SphereGeometry(0.14, 16, 16);
+                const glowMat = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.4,
+                    side: THREE.BackSide
+                });
+                const glow = new THREE.Mesh(glowGeo, glowMat);
+                group.add(glow);
+
+                // Outer pulse
+                const pulseGeo = new THREE.SphereGeometry(0.2, 16, 16);
+                const pulseMat = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.15,
+                    side: THREE.BackSide
+                });
+                const pulse = new THREE.Mesh(pulseGeo, pulseMat);
+                group.add(pulse);
+
+                group.position.copy(position);
+                return group;
+            };
+
+            const phMarker = createMarker(phiPos, 0xffd993);
+            const friendMarker = createMarker(friendPos, 0xf8b595);
+            locationMarkers.add(phMarker);
+            locationMarkers.add(friendMarker);
+            scene.add(locationMarkers);
+
+            // Create curved connection arc
+            const curvePoints = [];
+            const segments = 50;
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const point = new THREE.Vector3().lerpVectors(phiPos, friendPos, t);
+                // Lift the arc above the globe surface
+                const lift = Math.sin(t * Math.PI) * 1.2;
+                point.normalize().multiplyScalar(1.85 + lift);
+                curvePoints.push(point);
+            }
+
+            const curve = new THREE.CatmullRomCurve3(curvePoints);
+            const arcGeometry = new THREE.TubeGeometry(curve, 64, 0.015, 8, false);
+            const arcMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffd993,
+                transparent: true,
+                opacity: 0.7
+            });
+            connectionArc = new THREE.Mesh(arcGeometry, arcMaterial);
+            scene.add(connectionArc);
+
+            // Create particles along the arc
+            const particleCount = 30;
+            const particleGeometry = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const t = i / particleCount;
+                const point = curve.getPoint(t);
+                particlePositions[i * 3] = point.x;
+                particlePositions[i * 3 + 1] = point.y;
+                particlePositions[i * 3 + 2] = point.z;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.8
+            });
+            arcParticles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(arcParticles);
+        }
+
+        function createFloatingParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const count = 100;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 30;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+
+                const color = new THREE.Color();
+                const rand = Math.random();
+                if (rand > 0.7) {
+                    color.setHSL(0.1, 0.8, 0.8); // Gold
+                } else if (rand > 0.4) {
+                    color.setHSL(0.08, 0.6, 0.85); // Peach
+                } else {
+                    color.setHSL(0.75, 0.4, 0.7); // Purple
+                }
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                sizeAttenuation: true
+            });
+
+            floatingParticles = new THREE.Points(geometry, material);
+            scene.add(floatingParticles);
+        }
+
+        function createAmbientLights() {
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambient);
+
+            const pointLight = new THREE.PointLight(0xffd993, 1.5, 25);
+            pointLight.position.set(0, 0, 0);
+            scene.add(pointLight);
+
+            const pointLight2 = new THREE.PointLight(0x7eb5d6, 0.5, 30);
+            pointLight2.position.set(5, 5, 5);
+            scene.add(pointLight2);
+        }
+
+        function onMouseMove(e) {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+        }
+
+        function onTouchMove(e) {
+            if (e.touches.length > 0) {
+                mouseX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+                mouseY = (e.touches[0].clientY / window.innerHeight) * 2 - 1;
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateSceneForScreen(index) {
+            const config = sceneConfigs[index];
+
+            gsap.to(camera.position, {
+                z: config.cameraZ,
+                duration: 2.5,
+                ease: "power2.inOut"
+            });
+
+            // Fade globe and connection elements
+            if (globe) {
+                gsap.to(globe.scale, {
+                    x: config.globeScale,
+                    y: config.globeScale,
+                    z: config.globeScale,
+                    duration: 2,
+                    ease: "power2.inOut"
+                });
+                globe.children.forEach(child => {
+                    if (child.material) {
+                        gsap.to(child.material, {
+                            opacity: child.material.opacity * config.globeOpacity,
+                            duration: 2
+                        });
+                    }
+                });
+            }
+
+            if (connectionArc) {
+                gsap.to(connectionArc.material, {
+                    opacity: 0.7 * config.globeOpacity,
+                    duration: 2
+                });
+            }
+
+            if (locationMarkers) {
+                locationMarkers.children.forEach(marker => {
+                    gsap.to(marker.scale, {
+                        x: config.globeScale,
+                        y: config.globeScale,
+                        z: config.globeScale,
+                        duration: 2
+                    });
+                });
+            }
+
+            if (arcParticles) {
+                gsap.to(arcParticles.material, {
+                    opacity: 0.8 * config.globeOpacity,
+                    duration: 2
+                });
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001;
+
+            // Stars slow rotation
+            if (stars) {
+                stars.rotation.y += 0.00015;
+                stars.rotation.x = mouseY * 0.03;
+            }
+
+            // Globe rotation
+            if (globe) {
+                globe.rotation.y += 0.002;
+                
+                // Pulse the inner core
+                const pulse = Math.sin(time * 2) * 0.1 + 1;
+                if (globe.children[1]) { // Core
+                    globe.children[1].scale.setScalar(pulse);
+                }
+                if (globe.children[2]) { // Core glow
+                    globe.children[2].scale.setScalar(pulse * 1.1);
+                }
+            }
+
+            // Location markers pulse
+            if (locationMarkers) {
+                locationMarkers.children.forEach((marker, i) => {
+                    const markerPulse = Math.sin(time * 3 + i) * 0.15 + 1;
+                    if (marker.children[2]) { // Outer pulse sphere
+                        marker.children[2].scale.setScalar(markerPulse);
+                    }
+                });
+            }
+
+            // Arc particles animation (traveling along the arc)
+            if (arcParticles) {
+                const positions = arcParticles.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length / 3; i++) {
+                    const offset = (time * 0.5 + i * 0.1) % 1;
+                    const brightness = Math.sin(offset * Math.PI);
+                }
+                arcParticles.material.opacity = 0.5 + Math.sin(time * 2) * 0.3;
+            }
+
+            // Connection arc glow pulse
+            if (connectionArc) {
+                connectionArc.material.opacity = 0.5 + Math.sin(time * 1.5) * 0.2;
+            }
+
+            // Floating particles drift
+            if (floatingParticles) {
+                floatingParticles.rotation.y += 0.0002;
+                floatingParticles.rotation.x += 0.0001;
+                const positions = floatingParticles.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i + 1] += Math.sin(time * 0.5 + i) * 0.003;
+                    positions[i] += Math.cos(time * 0.3 + i) * 0.001;
+                }
+                floatingParticles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Camera subtle movement based on mouse
+            camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.015;
+            camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.015;
+            camera.lookAt(0, 0, 0);
+
+            renderer.render(scene, camera);
+        }
+
+        /* ============================================
+           AMBIENT AUDIO
+           ============================================ */
+        
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioContext.createGain();
+            gainNode.connect(audioContext.destination);
+            gainNode.gain.value = 0.15;
+        }
+
+        function playAmbientTone() {
+            if (!audioContext || isPlaying) return;
+
+            // Create soft ambient drone
+            const osc1 = audioContext.createOscillator();
+            const osc2 = audioContext.createOscillator();
+            const osc3 = audioContext.createOscillator();
+
+            osc1.type = 'sine';
+            osc2.type = 'sine';
+            osc3.type = 'triangle';
+
+            osc1.frequency.value = 110;
+            osc2.frequency.value = 165;
+            osc3.frequency.value = 220;
+
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 400;
+
+            osc1.connect(filter);
+            osc2.connect(filter);
+            osc3.connect(filter);
+            filter.connect(gainNode);
+
+            osc1.start();
+            osc2.start();
+            osc3.start();
+
+            isPlaying = true;
+            document.getElementById('mute-btn').textContent = '🔊';
+
+            // Store for later
+            window.oscillators = [osc1, osc2, osc3];
+        }
+
+        function stopAudio() {
+            if (window.oscillators) {
+                window.oscillators.forEach(osc => {
+                    try { osc.stop(); } catch(e) {}
+                });
+                window.oscillators = null;
+            }
+            isPlaying = false;
+            document.getElementById('mute-btn').textContent = '🔇';
+        }
+
+        function toggleAudio() {
+            if (isPlaying) {
+                stopAudio();
+            } else {
+                if (!audioContext) initAudio();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                playAmbientTone();
+            }
+        }
+
+        /* ============================================
+           TYPING EFFECT
+           ============================================ */
+        
+        const messages = [
+            "Hey Athala...",
+            "Just a small birthday wish for you.",
+            "I hope your day feels calm, bright, and happy ✨",
+            "Even with distance between us...",
+            "I'm sending warm wishes from here.",
+            "May this new year bring you health, peace, and good surprises.",
+            "Happy Birthday, Athala."
+        ];
+
+        let currentMessageIndex = 0;
+        let charIndex = 0;
+        let typingInterval;
+
+        function createMessageIndicators() {
+            const container = document.getElementById('message-indicator');
+            container.innerHTML = '';
+            messages.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'indicator-dot';
+                if (i === 0) dot.classList.add('active');
+                container.appendChild(dot);
+            });
+            gsap.to(container, { opacity: 1, duration: 0.5, delay: 0.5 });
+        }
+
+        function typeMessage() {
+            const container = document.getElementById('typed-message');
+            const message = messages[currentMessageIndex];
+            const continueBtn = document.getElementById('continue-btn');
+
+            // Reset
+            container.innerHTML = '<span class="cursor"></span>';
+            charIndex = 0;
+            continueBtn.classList.remove('visible');
+
+            // Update indicators
+            document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
+                dot.classList.remove('active');
+                if (i < currentMessageIndex) dot.classList.add('completed');
+                if (i === currentMessageIndex) dot.classList.add('active');
+            });
+
+            // Type character by character
+            typingInterval = setInterval(() => {
+                if (charIndex < message.length) {
+                    const text = message.substring(0, charIndex + 1);
+                    container.innerHTML = text + '<span class="cursor"></span>';
+                    charIndex++;
+                } else {
+                    clearInterval(typingInterval);
+                    // Show continue button
+                    setTimeout(() => {
+                        continueBtn.classList.add('visible');
+                        // Small confetti on message complete
+                        if (currentMessageIndex === 3 || currentMessageIndex === 6) {
+                            milestoneConfetti();
+                        } else {
+                            messageConfetti();
+                        }
+                    }, 400);
+                }
+            }, 55);
+        }
+
+        function nextMessage() {
+            currentMessageIndex++;
+            if (currentMessageIndex < messages.length) {
+                typeMessage();
+            } else {
+                showBirthdayScreen();
+            }
+        }
+
+        /* ============================================
+           SCREEN TRANSITIONS
+           ============================================ */
+        
+        const screens = {
+            arrival: document.getElementById('screen-arrival'),
+            revelation: document.getElementById('screen-revelation'),
+            birthday: document.getElementById('screen-birthday'),
+            finale: document.getElementById('screen-finale')
+        };
+
+        function transitionTo(from, to, index) {
+            from.classList.remove('active');
+            currentScreen = index;
+            updateSceneForScreen(index);
+
+            setTimeout(() => {
+                to.classList.add('active');
+            }, 800);
+        }
+
+        // Dots animation for connecting text
+        function animateConnectingDots() {
+            const dots = document.querySelector('.connecting-text .dots');
+            let count = 0;
+            setInterval(() => {
+                count = (count + 1) % 4;
+                dots.textContent = '.'.repeat(count);
+            }, 500);
+        }
+
+        function animateArrivalScreen() {
+            animateConnectingDots();
+            gsap.to('.connecting-text', { opacity: 1, duration: 1, delay: 0.5 });
+            gsap.to('.distance-visual', { opacity: 1, duration: 1, delay: 1.2 });
+            gsap.to('.arrival-message', { opacity: 1, duration: 1, delay: 2 });
+            gsap.to('.begin-btn', { opacity: 1, duration: 1, delay: 2.8 });
+
+            setTimeout(() => gentleSparkles(2500), 2500);
+        }
+
+        function showRevelationScreen() {
+            if (!audioContext) initAudio();
+            if (audioContext.state === 'suspended') audioContext.resume();
+            playAmbientTone();
+
+            transitionTo(screens.arrival, screens.revelation, 1);
+            setTimeout(() => {
+                createMessageIndicators();
+                typeMessage();
+            }, 1000);
+        }
+
+        function showBirthdayScreen() {
+            transitionTo(screens.revelation, screens.birthday, 2);
+            setTimeout(() => {
+                animateBirthdayElements();
+                birthdayRevealConfetti();
+            }, 1000);
+        }
+
+        function animateBirthdayElements() {
+            const elements = [
+                { el: '.birthday-pretitle', delay: 0 },
+                { el: '.birthday-name', delay: 0.3 },
+                { el: '.birthday-date', delay: 0.6 },
+                { el: '.gift-orb-container', delay: 0.9 },
+                { el: '.birthday-message', delay: 1.4 },
+                { el: '.birthday-wishes', delay: 1.8 },
+                { el: '.birthday-continue', delay: 2.2 }
+            ];
+
+            elements.forEach(item => {
+                gsap.to(item.el, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 1,
+                    delay: item.delay,
+                    ease: "power2.out"
+                });
+            });
+
+            setTimeout(() => birthdaySparkles(), 2500);
+        }
+
+        function showFinaleScreen() {
+            transitionTo(screens.birthday, screens.finale, 3);
+            setTimeout(() => {
+                animateFinaleElements();
+                finaleGrandCelebration();
+                startFinalePeriodicBursts();
+            }, 1000);
+        }
+
+        function animateFinaleElements() {
+            const elements = [
+                { el: '.finale-icon', delay: 0.2 },
+                { el: '.finale-quote', delay: 0.6 },
+                { el: '.finale-divider', delay: 1.1 },
+                { el: '.finale-message', delay: 1.5 },
+                { el: '.finale-closing', delay: 2.1 },
+                { el: '.finale-actions', delay: 2.6 }
+            ];
+
+            elements.forEach(item => {
+                gsap.to(item.el, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 1,
+                    delay: item.delay,
+                    ease: "power2.out"
+                });
+            });
+        }
+
+        function restartExperience() {
+            clearInterval(finaleInterval);
+            stopAudio();
+
+            currentMessageIndex = 0;
+            currentScreen = 0;
+
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+
+            // Reset all animated elements
+            gsap.set([
+                '.connecting-text', '.distance-visual', '.arrival-message', '.begin-btn',
+                '.birthday-pretitle', '.birthday-name', '.birthday-date', '.gift-orb-container',
+                '.birthday-message', '.birthday-wishes', '.birthday-continue',
+                '.finale-icon', '.finale-quote', '.finale-divider', '.finale-message',
+                '.finale-closing', '.finale-actions', '.message-indicator'
+            ], { opacity: 0, y: 20 });
+
+            document.getElementById('typed-message').innerHTML = '';
+            document.getElementById('continue-btn').classList.remove('visible');
+
+            setTimeout(() => {
+                screens.arrival.classList.add('active');
+                updateSceneForScreen(0);
+                animateArrivalScreen();
+            }, 600);
+        }
+
+        /* ============================================
+           EVENT LISTENERS
+           ============================================ */
+        
+        document.getElementById('begin-btn').addEventListener('click', showRevelationScreen);
+        document.getElementById('continue-btn').addEventListener('click', nextMessage);
+        document.getElementById('birthday-continue').addEventListener('click', showFinaleScreen);
+        document.getElementById('restart-btn').addEventListener('click', restartExperience);
+        document.getElementById('mute-btn').addEventListener('click', toggleAudio);
+
+        /* ============================================
+           INITIALIZATION
+           ============================================ */
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set the birthday date to December 19
+            const dateEl = document.getElementById('birthday-date');
+            if (dateEl) {
+                dateEl.textContent = 'December 19';
+            }
+
+            initThreeJS();
+            setTimeout(animateArrivalScreen, 400);
+        });
+    </script>
+</body>
+</html>
