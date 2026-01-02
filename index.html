@@ -1259,7 +1259,7 @@
         let stars, floatingParticles;
         let mouseX = 0, mouseY = 0;
         let currentScreen = 0;
-        let audioContext, gainNode, isPlaying = false;
+        let backgroundAudio, isPlaying = false;
 
         let globe, connectionArc, locationMarkers, arcParticles;
 
@@ -1705,58 +1705,29 @@
         }
 
         /* ============================================
-           AMBIENT AUDIO
+           BACKGROUND AUDIO (birthday.mp3)
            ============================================ */
         
         function initAudio() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioContext.createGain();
-            gainNode.connect(audioContext.destination);
-            gainNode.gain.value = 0.15;
+            backgroundAudio = new Audio('birthday.mp3');
+            backgroundAudio.loop = true;
+            backgroundAudio.volume = 0.5;
         }
 
-        function playAmbientTone() {
-            if (!audioContext || isPlaying) return;
-
-            // Create soft ambient drone
-            const osc1 = audioContext.createOscillator();
-            const osc2 = audioContext.createOscillator();
-            const osc3 = audioContext.createOscillator();
-
-            osc1.type = 'sine';
-            osc2.type = 'sine';
-            osc3.type = 'triangle';
-
-            osc1.frequency.value = 110;
-            osc2.frequency.value = 165;
-            osc3.frequency.value = 220;
-
-            const filter = audioContext.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.value = 400;
-
-            osc1.connect(filter);
-            osc2.connect(filter);
-            osc3.connect(filter);
-            filter.connect(gainNode);
-
-            osc1.start();
-            osc2.start();
-            osc3.start();
-
-            isPlaying = true;
-            document.getElementById('mute-btn').textContent = '🔊';
-
-            // Store for later
-            window.oscillators = [osc1, osc2, osc3];
+        function playAudio() {
+            if (!backgroundAudio) initAudio();
+            backgroundAudio.play().then(() => {
+                isPlaying = true;
+                document.getElementById('mute-btn').textContent = '🔊';
+            }).catch(err => {
+                console.log('Audio play failed:', err);
+            });
         }
 
         function stopAudio() {
-            if (window.oscillators) {
-                window.oscillators.forEach(osc => {
-                    try { osc.stop(); } catch(e) {}
-                });
-                window.oscillators = null;
+            if (backgroundAudio) {
+                backgroundAudio.pause();
+                backgroundAudio.currentTime = 0;
             }
             isPlaying = false;
             document.getElementById('mute-btn').textContent = '🔇';
@@ -1766,11 +1737,7 @@
             if (isPlaying) {
                 stopAudio();
             } else {
-                if (!audioContext) initAudio();
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-                playAmbientTone();
+                playAudio();
             }
         }
 
@@ -1894,9 +1861,8 @@
         }
 
         function showRevelationScreen() {
-            if (!audioContext) initAudio();
-            if (audioContext.state === 'suspended') audioContext.resume();
-            playAmbientTone();
+            // Start playing background music
+            playAudio();
 
             transitionTo(screens.arrival, screens.revelation, 1);
             setTimeout(() => {
@@ -2017,6 +1983,7 @@
             }
 
             initThreeJS();
+            initAudio();
             setTimeout(animateArrivalScreen, 400);
         });
     </script>
