@@ -1714,36 +1714,35 @@
            ============================================ */
         
         const bgMusic = document.getElementById('bg-music');
-        let isMusicPlaying = false;
+        const muteBtn = document.getElementById('mute-btn');
+
+        function updateMuteButton() {
+            if (bgMusic.paused) {
+                muteBtn.textContent = '🔇';
+            } else {
+                muteBtn.textContent = '🔊';
+            }
+        }
 
         function toggleAudio() {
-            if (isMusicPlaying) {
-                bgMusic.pause();
-                isMusicPlaying = false;
-                document.getElementById('mute-btn').textContent = '🔇';
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log("Audio play failed:", e));
             } else {
-                bgMusic.play().then(() => {
-                    isMusicPlaying = true;
-                    document.getElementById('mute-btn').textContent = '🔊';
-                }).catch(e => console.log("Audio play failed:", e));
+                bgMusic.pause();
             }
         }
 
         function playMusic() {
-            if (!isMusicPlaying) {
-                bgMusic.play().then(() => {
-                    isMusicPlaying = true;
-                    document.getElementById('mute-btn').textContent = '🔊';
-                }).catch(e => console.log("Audio play failed:", e));
-            }
+            bgMusic.play().catch(e => console.log("Audio play failed:", e));
         }
 
         function stopMusic() {
             bgMusic.pause();
             bgMusic.currentTime = 0;
-            isMusicPlaying = false;
-            document.getElementById('mute-btn').textContent = '🔇';
         }
+
+        bgMusic.addEventListener('play', updateMuteButton);
+        bgMusic.addEventListener('pause', updateMuteButton);
 
         /* ============================================
            TYPING EFFECT
