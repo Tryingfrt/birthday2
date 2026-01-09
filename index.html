@@ -695,6 +695,11 @@
          MUTE BUTTON
          ========================================== -->
     <button id="mute-btn" title="Toggle Sound">🔇</button>
+    
+    <!-- Audio Element -->
+    <audio id="bg-music" loop>
+        <source src="brithday.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- ==========================================
          UI OVERLAY
@@ -1259,7 +1264,7 @@
         let stars, floatingParticles;
         let mouseX = 0, mouseY = 0;
         let currentScreen = 0;
-        let backgroundAudio, isPlaying = false;
+        let audioContext, gainNode, isPlaying = false;
 
         let globe, connectionArc, locationMarkers, arcParticles;
 
@@ -1705,40 +1710,39 @@
         }
 
         /* ============================================
-           BACKGROUND AUDIO (birthday.mp3)
+           AUDIO HANDLING
            ============================================ */
         
-        function initAudio() {
-            backgroundAudio = new Audio('birthday.mp3');
-            backgroundAudio.loop = true;
-            backgroundAudio.volume = 0.5;
-        }
-
-        function playAudio() {
-            if (!backgroundAudio) initAudio();
-            backgroundAudio.play().then(() => {
-                isPlaying = true;
-                document.getElementById('mute-btn').textContent = '🔊';
-            }).catch(err => {
-                console.log('Audio play failed:', err);
-            });
-        }
-
-        function stopAudio() {
-            if (backgroundAudio) {
-                backgroundAudio.pause();
-                backgroundAudio.currentTime = 0;
-            }
-            isPlaying = false;
-            document.getElementById('mute-btn').textContent = '🔇';
-        }
+        const bgMusic = document.getElementById('bg-music');
+        let isMusicPlaying = false;
 
         function toggleAudio() {
-            if (isPlaying) {
-                stopAudio();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                document.getElementById('mute-btn').textContent = '🔇';
             } else {
-                playAudio();
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    document.getElementById('mute-btn').textContent = '🔊';
+                }).catch(e => console.log("Audio play failed:", e));
             }
+        }
+
+        function playMusic() {
+            if (!isMusicPlaying) {
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    document.getElementById('mute-btn').textContent = '🔊';
+                }).catch(e => console.log("Audio play failed:", e));
+            }
+        }
+
+        function stopMusic() {
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            isMusicPlaying = false;
+            document.getElementById('mute-btn').textContent = '🔇';
         }
 
         /* ============================================
@@ -1861,8 +1865,7 @@
         }
 
         function showRevelationScreen() {
-            // Start playing background music
-            playAudio();
+            playMusic();
 
             transitionTo(screens.arrival, screens.revelation, 1);
             setTimeout(() => {
@@ -1935,7 +1938,7 @@
 
         function restartExperience() {
             clearInterval(finaleInterval);
-            stopAudio();
+            stopMusic();
 
             currentMessageIndex = 0;
             currentScreen = 0;
@@ -1983,7 +1986,6 @@
             }
 
             initThreeJS();
-            initAudio();
             setTimeout(animateArrivalScreen, 400);
         });
     </script>
